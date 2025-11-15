@@ -1,5 +1,7 @@
-package com.example.bankcards.exception;
+package com.example.bankcards.controller;
 
+import com.example.bankcards.exception.ResourceAlreadyOccupiedException;
+import com.example.bankcards.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -71,15 +73,6 @@ public class GlobalExceptionHandler {
         errors.put("error", "Resource already occupied");
         errors.put("message", ex.getMessage());
         return new ResponseEntity<>(errors, HttpStatus.CONFLICT);
-    }
-
-    @ExceptionHandler(RequestValidationException.class)
-    public ResponseEntity<Map<String, Object>> handleRequestValidation(RequestValidationException ex) {
-        Map<String, Object> errors = new HashMap<>();
-        errors.put("status", HttpStatus.BAD_REQUEST.value());
-        errors.put("error", "Invalid request");
-        errors.put("message", ex.getMessage());
-        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

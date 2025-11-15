@@ -6,9 +6,11 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SecurityException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -47,6 +49,14 @@ public class JwtService {
         return claims.getSubject();
     }
 
+    public String getTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        return null;
+    }
+
     public boolean validateJwtToken(String token) {
         try {
             Jwts.parser()
@@ -70,18 +80,14 @@ public class JwtService {
     }
 
     private String generateJwtToken(String email, String roles) {
-        try {
-            Date date = Date.from(LocalDateTime.now().plusMinutes(5).atZone(ZoneId.systemDefault()).toInstant());
-            return Jwts
-                    .builder()
-                    .subject(email)
-                    .claim("roles", roles)
-                    .expiration(date)
-                    .signWith(getSignInKey())
-                    .compact();
-        } catch (Exception e) {
-            throw new RuntimeException("Тут");
-        }
+        Date date = Date.from(LocalDateTime.now().plusMinutes(5).atZone(ZoneId.systemDefault()).toInstant());
+        return Jwts
+                .builder()
+                .subject(email)
+                .claim("roles", roles)
+                .expiration(date)
+                .signWith(getSignInKey())
+                .compact();
     }
 
     private String generateRefreshToken(String email) {

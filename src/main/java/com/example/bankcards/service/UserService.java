@@ -41,7 +41,7 @@ public class UserService {
         throw new AuthenticationException("Invalid refresh token");
     }
 
-    public List<UserDto> readUsers(Integer page, Integer size) {
+    public List<UserDto> readUsers(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         List<User> users = userRepository.findAll(pageRequest).getContent();
         return users.stream()
@@ -62,8 +62,13 @@ public class UserService {
     }
 
     @Transactional
-    public void updateUser(Long id, String username, String email, String password, String roles) {
-        userRepository.findById(validateUserId(id).getId()).map(user -> validateUser(user, username, email, password, roles));
+    public void updateUser(UpdatedUserDto updatedUserDto) {
+        userRepository.findById(validateUserId(updatedUserDto.getId()).getId()).map(user ->
+                validateUser(user,
+                        updatedUserDto.getUsername(),
+                        updatedUserDto.getEmail(),
+                        updatedUserDto.getPassword(),
+                        updatedUserDto.getRoles()));
     }
 
     private void validateUserDtoEmail(UserDto userDto) {

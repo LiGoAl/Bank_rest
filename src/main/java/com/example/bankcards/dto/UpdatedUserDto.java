@@ -8,11 +8,15 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class UserCredentialsDto {
-    @NotNull(message = "Email can't be empty")
+public class UpdatedUserDto {
+    @NotNull(message = "Id can't be empty")
+    private Long id;
+    @NotBlank(message = "Name can't be empty")
+    private String username;
     @Pattern(regexp = "\\w+@\\w+\\.\\w+",message = "Email doesn't match the form")
     private String email;
-    @NotNull(message = "Password can't be empty")
     @NotBlank(message = "Password can't be empty")
     private String password;
+    @NotBlank(message = "Roles can't be empty")
+    private String roles;
 }

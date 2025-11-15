@@ -2,6 +2,7 @@ package com.example.bankcards.service;
 
 import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.dto.TransferDto;
+import com.example.bankcards.dto.UpdatedCardDto;
 import com.example.bankcards.entity.Card;
 import com.example.bankcards.exception.ResourceAlreadyOccupiedException;
 import com.example.bankcards.exception.ResourceNotFoundException;
@@ -26,7 +27,7 @@ public class CardService {
     private final CardRepository cardRepository;
     private final UserService userService;
 
-    public List<CardDto> readCards(Integer page, Integer size) {
+    public List<CardDto> readCards(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         List<Card> cards = cardRepository.findAll(pageRequest).getContent();
         return cards.stream()
@@ -35,6 +36,7 @@ public class CardService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional
     public CardDto createCard(CardDto cardDto) {
         Card card = CardMapper.INSTANCE.cardDtoToCard(cardDto);
         validateCardNumber(cardDto);
@@ -48,8 +50,14 @@ public class CardService {
     }
 
     @Transactional
-    public void updateCard(Long id, String cardNumber, Long userId, LocalDate expirationDate, CardStatus cardStatus, BigDecimal balance) {
-        cardRepository.findById(validateCardId(id).getId()).map(card -> validateCard(card, cardNumber, userId, expirationDate, cardStatus, balance));
+    public void updateCard(UpdatedCardDto updatedCardDto) {
+        cardRepository.findById(validateCardId(updatedCardDto.getId()).getId()).map(card ->
+                validateCard(card,
+                        updatedCardDto.getCardNumber(),
+                        updatedCardDto.getUserId(),
+                        updatedCardDto.getExpirationDate(),
+                        updatedCardDto.getCardStatus(),
+                        updatedCardDto.getBalance()));
     }
 
     private void validateCardNumber(CardDto cardDto) {

@@ -2,8 +2,8 @@ package com.example.bankcards.controller;
 
 import com.example.bankcards.dto.BlockCardRequestDto;
 import com.example.bankcards.dto.CardDto;
+import com.example.bankcards.dto.IdDto;
 import com.example.bankcards.dto.TransferDto;
-import com.example.bankcards.exception.RequestValidationException;
 import com.example.bankcards.service.UserCardService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,14 +22,14 @@ public class UserCardController {
     private final UserCardService userCardService;
 
     @GetMapping
-    public List<CardDto> readUserCards(@RequestParam(defaultValue = "0") Integer page,
-                                       @RequestParam(defaultValue = "5") Integer size) {
+    public List<CardDto> readUserCards(@RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "5") int size) {
         return userCardService.readUserCards(page, size);
     }
 
-    @GetMapping("/{cardId}")
-    public CardDto readUserCard(@PathVariable Long cardId) {
-        return userCardService.readUserCard(validateId(cardId));
+    @GetMapping("/card")
+    public CardDto readUserCard(@Valid @RequestBody IdDto idDto) {
+        return userCardService.readUserCard(idDto.getId());
     }
 
     @PostMapping("/transfer")
@@ -37,27 +37,21 @@ public class UserCardController {
         userCardService.transferMoney(transferDto);
     }
 
-    @PostMapping("/block/{cardId}")
-    public void blockCardRequest(@PathVariable Long cardId) {
-        userCardService.blockCardRequest(validateId(cardId));
+    @PostMapping("/block")
+    public void blockCardRequest(@Valid @RequestBody IdDto idDto) {
+        userCardService.blockCardRequest(idDto.getId());
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/block-requests")
-    public List<BlockCardRequestDto> readBlockCardRequests(@RequestParam(defaultValue = "0") Integer page,
-                                                           @RequestParam(defaultValue = "5") Integer size) {
+    public List<BlockCardRequestDto> readBlockCardRequests(@RequestParam(defaultValue = "0") int page,
+                                                           @RequestParam(defaultValue = "5") int size) {
         return userCardService.readBlockCardRequests(page, size);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
-    @PostMapping("/block-requests/{requestId}")
-    public void blockCard(@PathVariable Long requestId) {
-        userCardService.blockCard(validateId(requestId));
-    }
-
-    private Long validateId(Long id) {
-        if (id == null || id <= 0) {
-            throw new RequestValidationException("Id must be greater than 0 and can't be empty");
-        } else return id;
+    @PostMapping("/block-requests")
+    public void blockCard(@Valid @RequestBody IdDto idDto) {
+        userCardService.blockCard(idDto.getId());
     }
 }

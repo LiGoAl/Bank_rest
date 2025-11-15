@@ -30,7 +30,7 @@ public class UserCardService {
     private final UserService userService;
     private final CardService cardService;
 
-    public List<CardDto> readUserCards(Integer page, Integer size) {
+    public List<CardDto> readUserCards(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String email = customUserDetails.getUsername();
@@ -63,7 +63,7 @@ public class UserCardService {
         blockCardRequestRepository.save(blockCardRequest);
     }
 
-    public List<BlockCardRequestDto> readBlockCardRequests(Integer page, Integer size) {
+    public List<BlockCardRequestDto> readBlockCardRequests(int page, int size) {
         PageRequest pageRequest = PageRequest.of(page, size);
         List<BlockCardRequest> requests = blockCardRequestRepository.findByProcessedFalse(pageRequest).getContent();
         return requests.stream()
