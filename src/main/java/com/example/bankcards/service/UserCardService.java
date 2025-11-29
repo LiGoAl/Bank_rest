@@ -48,10 +48,7 @@ public class UserCardService {
     public void transferMoney(TransferDto transferDto) {
         CustomUserDetails customUserDetails = (CustomUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String email = customUserDetails.getUsername();
-        List<CardDto> cardDtos = userService.readUserCards(email);
-        validateUserCardsNumber(cardDtos, transferDto);
-        validateTransfer(transferDto);
-        cardService.transfer(transferDto);
+        cardService.transfer(transferDto, email);
     }
 
     public void blockCardRequest(Long cardId) {
@@ -74,41 +71,16 @@ public class UserCardService {
     @Transactional
     public void blockCard(Long requestId) {
         BlockCardRequest request = validateRequestId(requestId);
+        if (request.getProcessed().equals(Boolean.TRUE)) {
+            return;
+        }
+        Card lockedCard = cardService.findByCardNumberForUpdate(request.getCard().getCardNumber());
+        lockedCard.setCardStatus(CardStatus.BLOCKED);
         request.setProcessed(true);
-        request.getCard().setCardStatus(CardStatus.BLOCKED);
-    }
-
-    private void validateUserCardsNumber(List<CardDto> cardDtos, TransferDto transferDto) {
-
-        if (transferDto.getFromCardNumber().equals(transferDto.getToCardNumber())) {
-            throw new IllegalArgumentException("Card number must be different");
-        }
-
-        List<String> cardNumbersToValidate = List.of(
-                transferDto.getFromCardNumber(),
-                transferDto.getToCardNumber()
-        );
-
-        boolean allCardsExist = cardNumbersToValidate.stream()
-                .allMatch(cardNumberToValidate ->
-                        cardDtos.stream()
-                                .map(CardDto::getCardNumber)
-                                .anyMatch(cardNumber -> cardNumber.equals(cardNumberToValidate))
-                );
-
-        if (!allCardsExist) {
-            throw new IllegalArgumentException("One or both card numbers do not exist in the user's cards.");
-        }
-    }
-
-    private void validateTransfer(TransferDto transferDto) {
-        Card cardFrom = cardService.findCardByCardNumber(transferDto.getFromCardNumber());
-        if (cardFrom.getBalance().compareTo(transferDto.getAmount()) < 0) {
-            throw new IllegalArgumentException("On balance not enough money for transfer");
-        }
     }
 
     private BlockCardRequest validateRequestId(Long requestId) {
-        return blockCardRequestRepository.findById(requestId).orElseThrow(() -> new ResourceNotFoundException("Request id not found by id=%s".formatted(requestId)));
+        return blockCardRequestRepository.findByIdForUpdate(requestId)
+                .orElseThrow(() -> new ResourceNotFoundException("Request not found by id=%s".formatted(requestId)));
     }
 }

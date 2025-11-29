@@ -117,4 +117,10 @@
         </insert>
     </changeSet>
 
+    <changeSet id="8" author="LiGoAl">
+        <addUniqueConstraint tableName="card" columnNames="card_number" constraintName="UK_CARD_CARD_NUMBER"/>
+        <addUniqueConstraint tableName="bank_user" columnNames="email" constraintName="UK_USER_EMAIL"/>
+        <modifyDataType tableName="card" columnName="balance" newDataType="DECIMAL(19,2)"/>
+    </changeSet>
+
 </databaseChangeLog>

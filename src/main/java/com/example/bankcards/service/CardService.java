@@ -4,6 +4,7 @@ import com.example.bankcards.dto.CardDto;
 import com.example.bankcards.dto.TransferDto;
 import com.example.bankcards.dto.UpdatedCardDto;
 import com.example.bankcards.entity.Card;
+import com.example.bankcards.entity.User;
 import com.example.bankcards.exception.ResourceAlreadyOccupiedException;
 import com.example.bankcards.exception.ResourceNotFoundException;
 import com.example.bankcards.repository.CardRepository;
@@ -91,15 +92,64 @@ public class CardService {
     }
 
     @Transactional
-    public void transfer(TransferDto transferDto) {
-        Card cardFrom = findCardByCardNumber(transferDto.getFromCardNumber()),
-                cardTo = findCardByCardNumber(transferDto.getToCardNumber());
+    public void transfer(TransferDto transferDto, String email) {
+        String fromNumber = transferDto.getFromCardNumber();
+        String toNumber = transferDto.getToCardNumber();
+
+        if (fromNumber.equals(toNumber)) {
+            throw new IllegalArgumentException("Card number must be different");
+        }
+
+        String first = fromNumber.compareTo(toNumber) < 0 ? fromNumber : toNumber;
+        String second = first.equals(fromNumber) ? toNumber : fromNumber;
+
+        Card firstLocked = cardRepository.findByCardNumberForUpdate(first)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found by Card Number: %s".formatted(first)));
+        Card secondLocked = cardRepository.findByCardNumberForUpdate(second)
+                .orElseThrow(() -> new ResourceNotFoundException("Card not found by Card Number: %s".formatted(second)));
+
+        Card cardFrom = first.equals(fromNumber) ? firstLocked : secondLocked;
+        Card cardTo = cardFrom.equals(firstLocked) ? secondLocked : firstLocked;
+
+        User user = userService.findByEmailForUpdate(email);
+
+        validateUserCardsNumber(user, transferDto);
+        validateTransfer(transferDto, cardFrom, cardTo);
+
         cardFrom.setBalance(cardFrom.getBalance().subtract(transferDto.getAmount()));
         cardTo.setBalance(cardTo.getBalance().add(transferDto.getAmount()));
     }
 
-    public Card findCardByCardNumber(String cardNumber) {
-        return cardRepository.findByCardNumber(cardNumber)
+    private void validateUserCardsNumber(User user, TransferDto transferDto) {
+        List<String> cardNumbersToValidate = List.of(
+                transferDto.getFromCardNumber(),
+                transferDto.getToCardNumber()
+        );
+
+        boolean allCardsExist = cardNumbersToValidate.stream()
+                .allMatch(cardNumberToValidate ->
+                        user.getCards()
+                                .stream()
+                                .map(Card::getCardNumber)
+                                .anyMatch(cardNumber -> cardNumber.equals(cardNumberToValidate))
+                );
+
+        if (!allCardsExist) {
+            throw new IllegalArgumentException("One or both card numbers do not exist in the user's cards.");
+        }
+    }
+
+    private void validateTransfer(TransferDto transferDto, Card cardFrom, Card cardTo) {
+        if (!(cardFrom.getCardStatus().equals(CardStatus.ACTIVE) && cardTo.getCardStatus().equals(CardStatus.ACTIVE))) {
+            throw new IllegalArgumentException("Card status must be ACTIVE");
+        }
+        if (cardFrom.getBalance().compareTo(transferDto.getAmount()) < 0) {
+            throw new IllegalArgumentException("On balance not enough money for transfer");
+        }
+    }
+
+    public Card findByCardNumberForUpdate(String cardNumber) {
+        return cardRepository.findByCardNumberForUpdate(cardNumber)
                 .orElseThrow(() -> new ResourceNotFoundException("Card not found by Card Number: %s".formatted(cardNumber)));
     }
 

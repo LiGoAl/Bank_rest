@@ -21,6 +21,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableMethodSecurity(prePostEnabled = true)
 public class SecurityConfig {
     private final JwtFilter jwtFilter;
+    private static final int BCRYPT_STRENGTH = 5;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -31,6 +32,8 @@ public class SecurityConfig {
                         .authenticationEntryPoint(new JwtAuthenticationEntryPoint()))
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/user_cards/**").hasRole("USER")
                         .requestMatchers("/users/**").hasRole("ADMIN")
                         .requestMatchers("/cards/**").hasRole("ADMIN"))
@@ -42,7 +45,7 @@ public class SecurityConfig {
 
     @Bean
     public PasswordEncoder getPasswordEncoder() {
-        return new BCryptPasswordEncoder(5);
+        return new BCryptPasswordEncoder(BCRYPT_STRENGTH);
     }
 
 }

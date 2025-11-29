@@ -106,10 +106,9 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public List<CardDto> readUserCards(String email) {
-        return userRepository.findCardsByEmail(email).stream()
-                .map(CardMapper.INSTANCE::cardToCardDto)
-                .collect(Collectors.toList());
+    public User findByEmailForUpdate(String email) {
+        return userRepository.findByEmailForUpdate(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found by email=%s".formatted(email)));
     }
 
     public CardDto readUserCard(String email, Long cardId) {

@@ -5,11 +5,13 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class TransferDto {
     @NotNull(message = "Card number can't be empty")
     @Pattern(regexp = "^\\d{4} \\d{4} \\d{4} \\d{4}$",message = "Card number doesn't match the form")
